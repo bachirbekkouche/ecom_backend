@@ -1,12 +1,13 @@
-import { BaseRepositoryInterface } from 'src/common/baseRepositoty.Interface';
+import { BaseRepositoryInterface } from 'src/common/baseRepository.Interface';
 import { User } from './user.entity';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
+import { UpdateUserModel } from '../models/update-user.models';
+import { CreateUserModel } from '../models/create-user.models';
 
 export interface IUsersRepository extends BaseRepositoryInterface<
   User,
-  CreateUserDto,
-  UpdateUserDto
+  CreateUserModel,
+  UpdateUserModel
 > {
   findByEmail(email: string): Promise<User | null>;
+  findByEmailWithPassword(email: string): Promise<User | null>;
 }

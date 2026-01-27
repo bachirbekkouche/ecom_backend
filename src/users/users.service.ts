@@ -1,17 +1,24 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { UsersRepository } from './users.repository';
+import { type IUsersRepository } from './entities/IUsersRepository';
+import * as bcrypt from 'bcrypt';
+
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import {type IUsersRepository } from './entities/IUsersRepository';
-import * as bcrypt from 'bcrypt'; 
+import { CreateUserModel } from './models/create-user.models';
+import { UpdateUserModel } from './models/update-user.models';
+
+export const USERS_REPOSITORY = Symbol('USERS_REPOSITORY');
 
 @Injectable()
 export class UsersService {
-  constructor( @Inject('IUsersRepository') private readonly usersRepo: IUsersRepository) {}
+  constructor(
+    @Inject(USERS_REPOSITORY) private readonly usersRepo: IUsersRepository,
+  ) {}
 
-    async create(data: CreateUserDto) {
-    data.password =await bcrypt.hashSync(data.password, 10);
-    return this.usersRepo.create(data);
+  async create(data: CreateUserDto) {
+    const model: CreateUserModel = await this.toCreateModel(data);
+
+    return this.usersRepo.create(model);
   }
 
   findAll() {
@@ -24,12 +31,33 @@ export class UsersService {
     return user;
   }
 
-  update(id: number, data: UpdateUserDto) {
-    return this.usersRepo.update(id, data);
+  async update(id: number, data: UpdateUserDto) {
+    const model = await this.toUpdateModel(data);
+    return this.usersRepo.update(id, model);
   }
 
   remove(id: number) {
     return this.usersRepo.remove(id);
   }
 
+  private async toCreateModel(dto: CreateUserDto): Promise<CreateUserModel> {
+    return {
+      email: dto.email,
+      name: dto.name,
+      username: dto.username,
+      phone: dto.phone,
+      photo: dto.photo,
+      password: await bcrypt.hash(dto.password, 10),
+    };
+  }
+
+  private async toUpdateModel(dto: UpdateUserDto): Promise<UpdateUserModel> {
+    const model: UpdateUserModel = { ...dto };
+
+    if (dto.password) {
+      model.password = await bcrypt.hash(dto.password, 10);
+    }
+
+    return model;
+  }
 }
